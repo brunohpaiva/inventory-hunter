@@ -2,6 +2,7 @@ import scraper.bestbuy
 import scraper.bhphotovideo
 import scraper.microcenter
 import scraper.newegg
+import scraper.kabum
 
 from scraper.common import ScraperFactory
 
