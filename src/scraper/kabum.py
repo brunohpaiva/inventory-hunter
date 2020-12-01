@@ -5,7 +5,6 @@ from scraper.common import ScrapeResult, Scraper, ScraperFactory
 
 class KabumScrapeResult(ScrapeResult):
     def parse(self):
-        alert_subject = 'In Stock'
         alert_content = ''
 
         # get name of product
@@ -15,23 +14,35 @@ class KabumScrapeResult(ScrapeResult):
         else:
             logging.warning(f'missing title: {self.url}')
 
-        preco_traco = self.soup.body.find('div', class_='preco_traco')
-        if preco_traco:
-            # get listed price
-            tag = preco_traco.find('div', class_='preco_normal')
-            price_str = self.set_price(tag)
+        buy_button = self.soup.body.select_one('div[class^=\'box_botao\']')
+
+        if buy_button is None:
+            logging.warning(f'missing buy button: {self.url}')
+            return
+
+        is_in_stock = 'box_botao-cm' in buy_button["class"] or 'comprar_detalhes.png' in buy_button.find('img')["src"]
+
+        if is_in_stock:
+            price_str = None
+
+            # check if not in sale
+            price_box = self.soup.body.find('div', class_='box_preco')
+            if price_box:
+                price_str = self.set_price(price_box.find('div', class_='preco_normal'))
+
+            # check if is in sale
+            price_box = self.soup.body.find('div', class_='box_preco-cm')
+            if price_box:
+                price_str = self.set_price(price_box.find('div', class_='preco_desconto-cm'))
+
             if price_str:
                 alert_subject = f'In Stock for {price_str}'
             else:
                 logging.warning(f'missing price: {self.url}')
+                return
 
-            # check for add to cart button
-            tag = self.soup.body.select_one('div.botao-comprar > img')
-            if tag and 'comprar_detalhes.png' in tag['src']:
-                self.alert_subject = alert_subject
-                self.alert_content = f'{alert_content.strip()}\n{self.url}'
-        else:
-            logging.warning(f'missing preco_traco div: {self.url}')
+            self.alert_subject = alert_subject
+            self.alert_content = f'{alert_content.strip()}\n{self.url}'
 
 
 @ScraperFactory.register

@@ -1,4 +1,5 @@
 ---
+refresh_interval: 5
 urls:
   - https://www.kabum.com.br/produto/130209/placa-de-v-deo-gigabyte-nvidia-geforce-rtx-3070-gaming-oc-8g-8gb-gddr6-gv-n3070gaming-oc-8gd
   - https://www.kabum.com.br/produto/129207/placa-de-v-deo-zotac-nvidia-geforce-rtx-3070-twin-edge-oc-8gb-gddr6-zt-a30700h-10p
