@@ -1,37 +1,22 @@
 import logging
 import sched
-import smtplib
 import sys
 
-from email.message import EmailMessage
-from email.utils import formatdate
+from alerter import EmailAlerter, DiscordAlerter, SlackAlerter
 from scraper import init_scrapers
-
-
-class Alerter:
-    def __init__(self, args):
-        self.sender = args.email[0]
-        self.recipients = args.email
-        self.relay = args.relay
-
-        # self('Testing relay', 'You can delete this message.')
-
-    def __call__(self, subject, content):
-        msg = EmailMessage()
-        msg.add_header('Date', formatdate())
-        msg.set_content(content)
-        if subject:
-            msg['Subject'] = subject
-        msg['From'] = self.sender
-        msg['To'] = ', '.join(self.recipients)
-        with smtplib.SMTP(self.relay) as s:
-            logging.debug(f'sending email: subject: {subject}')
-            s.send_message(msg)
 
 
 class Engine:
     def __init__(self, args, config, driver):
-        self.alerter = Alerter(args)
+
+        alert_types = {
+            "email": EmailAlerter,
+            "discord": DiscordAlerter,
+            "slack": SlackAlerter
+        }
+        self.alerter = alert_types[args.alerter_type](args)
+        logging.debug(f"selected alerter: {args.alerter_type} -> {self.alerter}")
+
         self.refresh_interval = config.refresh_interval
         self.max_price = config.max_price
         self.scheduler = sched.scheduler()
@@ -111,7 +96,7 @@ class Engine:
 
     def send_alert(self, s, result, reason):
         logging.info(f'{s.name}: {reason}')
-        self.alerter(result.alert_subject, result.alert_content)
+        self.alerter(subject=result.alert_subject, content=result.alert_content)
 
 
 def hunt(args, config, driver):
